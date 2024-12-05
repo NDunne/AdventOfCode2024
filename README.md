@@ -1,6 +1,8 @@
 # Usage
 
-> cargo run <day number>
+> cargo run `i`
+
+where `i` is the number of the day to run
 
 ## Notes
 
@@ -23,7 +25,7 @@ cargo clippy -- -Dwarnings
 
 - (aoc specific) I went for a hashmap approach to first count the col2, I think saves on complexity
 
-- traits are an interesting one with subtle differences to interfaces in other languages. rust works on 'data driven' approach where structs are data rather than traditional "objects", and traits define behaviour that data is capable of. I think the way you did it makes sense where a day has some underlying data structure, I also added a trait that defines a "Solution" i.e. something that can be called and return an answer to a part 1 and part 2 
+- traits are an interesting one with subtle differences to interfaces in other languages. rust works on 'data driven' approach where structs are data rather than traditional "objects", and traits define behaviour that data is capable of. I think the way you did it makes sense where a day has some underlying data structure, I also added a trait that defines a "Solution" i.e. something that can be called and return an answer to a part 1 and part 2
 
 - main acts as the driver and calls out to "something that implements Solution". This way the answer printing logic is centralised, and requires the result of `run()` to return a tuple of values that implement the IntoString type for printing
 
