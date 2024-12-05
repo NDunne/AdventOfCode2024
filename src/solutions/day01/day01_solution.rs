@@ -19,7 +19,7 @@ impl FileReader for SolutionDay01 {
 }
 
 impl Solution for SolutionDay01 {
-    fn run(mut self) -> anyhow::Result<(impl ToString, impl ToString)> {
+    fn run(&mut self) -> anyhow::Result<(i32, i32)> {
         self.process_file("./src/solutions/day01/input.txt")?;
         self.col1.sort();
         self.col2.sort();

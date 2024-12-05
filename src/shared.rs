@@ -18,5 +18,5 @@ pub trait FileReader {
 }
 
 pub trait Solution {
-    fn run(self) -> anyhow::Result<(impl ToString, impl ToString)>;
+    fn run(&mut self) -> anyhow::Result<(i32, i32)>;
 }

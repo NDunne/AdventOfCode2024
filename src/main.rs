@@ -14,8 +14,9 @@ fn main() {
         .parse()
         .expect("Expect argument to be a number");
 
-    let solver = match day_number {
-        1 => solutions::day01::day01_solution::SolutionDay01::default(),
+    let mut solver: Box<dyn Solution> = match day_number {
+        1 => Box::new(solutions::day01::day01_solution::SolutionDay01::default()) as Box<dyn Solution>,
+        2 => Box::new(solutions::day02::day02_solution::SolutionDay02::default()) as Box<dyn Solution>,
         _ => panic!("Unexpected day number {}", day_number),
     };
 
