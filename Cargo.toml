@@ -4,10 +4,5 @@ version = "0.1.0"
 authors = ["Nathan Dunne"]
 edition = "2021"
 
-[lib]
-name = "shared"
-path = "Shared/fileReader.rs"
-
-[[bin]]
-name = "Day1"
-path = "Day1/day1.rs"
+[dependencies]
+anyhow = "1.0.94"
