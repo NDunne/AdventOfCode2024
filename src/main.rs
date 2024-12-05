@@ -14,13 +14,14 @@ fn main() {
         .parse()
         .expect("Expect argument to be a number");
 
-    let day = match day_number {
-        1 => solutions::day01::Day1::default(),
+    let solver = match day_number {
+        1 => solutions::day01::day01_solution::SolutionDay01::default(),
         _ => panic!("Unexpected day number {}", day_number),
     };
 
-    match day.run() {
+    match solver.run() {
         Ok((part_1, part_2)) => {
+            println!("Day {}:", day_number);
             println!("Part1: {}", part_1.to_string());
             println!("Part2: {}", part_2.to_string());
         }
