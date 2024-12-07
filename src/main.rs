@@ -17,6 +17,7 @@ fn main() {
     let mut solver: Box<dyn Solution> = match day_number {
         1 => Box::new(solutions::day01::day01_solution::SolutionDay01::default()) as Box<dyn Solution>,
         2 => Box::new(solutions::day02::day02_solution::SolutionDay02::default()) as Box<dyn Solution>,
+        3 => Box::new(solutions::day03::day03_solution::SolutionDay03::default()) as Box<dyn Solution>,
         _ => panic!("Unexpected day number {}", day_number),
     };
 
