@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Solution
 {
     pub part1: isize,
@@ -16,5 +16,5 @@ impl fmt::Display for Solution {
 pub type SolutionResult = anyhow::Result<Solution>;
 
 pub trait Solver {    
-    fn run<'a>(&mut self, lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult;
+    fn solve<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult;
 }

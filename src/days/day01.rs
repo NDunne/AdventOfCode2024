@@ -3,28 +3,31 @@ use std::collections::HashMap;
 
 use crate::shared::{Solver, Solution, SolutionResult};
 
-#[derive(Default)]
-pub struct SolverDay01 {
-    col1: Vec<isize>,
-    col2: Vec<isize>,
-}
+pub struct SolverDay01 {}
 
 impl Solver for SolverDay01
 {
-    fn run<'a>(&mut self, lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult {
-        
+    fn solve<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult
+    {    
+        let mut col1: Vec<isize> = Vec::new();
+        let mut col2: Vec<isize> = Vec::new();
+
         for line in lines
         {
-            let cols = line.split("   ").collect::<Vec<&str>>();
-            self.col1.push(cols[0].parse::<isize>()?);
-            self.col2.push(cols[1].parse::<isize>()?);
+            let cols = line.split_whitespace().collect::<Vec<&str>>();
+            if cols.len() != 2
+            {
+                continue;
+            }
+            col1.push(cols[0].parse::<isize>()?);
+            col2.push(cols[1].parse::<isize>()?);
         }
-        self.col1.sort();
-        self.col2.sort();
+        col1.sort();
+        col2.sort();
 
         let mut col2_counter = HashMap::new();
         
-        for value in self.col2.iter() {
+        for value in col2.iter() {
             match col2_counter.entry(value) {
                 Occupied(mut e) => *e.get_mut() += 1,
                 Vacant(e) => {
@@ -33,34 +36,39 @@ impl Solver for SolverDay01
             }
         }
 
-        Ok(self.col1
+        Ok(col1
             .iter()
-            .zip(self.col2.iter())
-            .fold(Solution::default(), |mut res: Solution, (value_1, value_2)| {
-                res.part1 += (*value_2 - *value_1).abs();
-                res.part2 += *value_1 * col2_counter.get(value_1).unwrap_or(&0);
+            .zip(col2.iter())
+            .fold(Solution::default(), |mut res, (col1_v, col2_v)| {
+                res.part1 += (*col1_v - *col2_v).abs();
+                res.part2 += *col1_v * col2_counter.get(col1_v).unwrap_or(&0);
                 res
             })
         )
     }
 }
 
-#[test]
-fn test_day1()
+#[cfg(test)]
+mod test
 {
-    let sample: Vec<&str> = vec![
-        "3   4",
-        "4   3",
-        "2   5",
-        "1   3",
-        "3   9",
-        "3   3"
-    ];
+    use super::*;
 
-    let mut solver = SolverDay01::default();
-    let solution = solver.run(Box::new(sample.into_iter())).unwrap();
+    #[test]
+    fn test_sample()
+    {
+        let sample: &str = "
+            3   4
+            4   3
+            2   5
+            1   3
+            3   9
+            3   3
+        ";
 
-    assert_eq!(solution.part1, 11);
-    assert_eq!(solution.part2, 31);
+        let solution = SolverDay01::solve(Box::new(sample.split('\n'))).unwrap();
+
+        assert_eq!(solution.part1, 11);
+        assert_eq!(solution.part2, 31);
+    }
 }
 

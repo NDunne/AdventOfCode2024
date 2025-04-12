@@ -7,3 +7,4 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.94"
 regex = "1.11.1"
+matches = "*"
