@@ -5,50 +5,62 @@ use crate::shared::{Solver, Solution, SolutionResult};
 
 #[derive(Default)]
 pub struct SolverDay01 {
-    col1: Vec<i32>,
-    col2: Vec<i32>,
+    col1: Vec<isize>,
+    col2: Vec<isize>,
 }
 
 impl Solver for SolverDay01
 {
     fn run<'a>(&mut self, lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult {
-        Ok(Solution { part1: 0, part2: 0 } )
+        
+        for line in lines
+        {
+            let cols = line.split("   ").collect::<Vec<&str>>();
+            self.col1.push(cols[0].parse::<isize>()?);
+            self.col2.push(cols[1].parse::<isize>()?);
+        }
+        self.col1.sort();
+        self.col2.sort();
+
+        let mut col2_counter = HashMap::new();
+        
+        for value in self.col2.iter() {
+            match col2_counter.entry(value) {
+                Occupied(mut e) => *e.get_mut() += 1,
+                Vacant(e) => {
+                    e.insert(1);
+                }
+            }
+        }
+
+        Ok(self.col1
+            .iter()
+            .zip(self.col2.iter())
+            .fold(Solution::default(), |mut res: Solution, (value_1, value_2)| {
+                res.part1 += (*value_2 - *value_1).abs();
+                res.part2 += *value_1 * col2_counter.get(value_1).unwrap_or(&0);
+                res
+            })
+        )
     }
 }
 
-// impl FileReader for SolutionDay01 {
-//     fn process_row(&mut self, row: &str) -> anyhow::Result<()> {
-//         let cols = row.split("   ").collect::<Vec<&str>>();
-//         self.col1.push(cols[0].parse::<i32>()?);
-//         self.col2.push(cols[1].parse::<i32>()?);
-//         Ok(())
-//     }
-// }
+#[test]
+fn test_day1()
+{
+    let sample: Vec<&str> = vec![
+        "3   4",
+        "4   3",
+        "2   5",
+        "1   3",
+        "3   9",
+        "3   3"
+    ];
 
-// impl Solution for SolutionDay01 {
-//     fn run(&mut self) -> anyhow::Result<(i32, i32)> {
-//         self.process_file("./src/solutions/day01/input.txt")?;
-//         self.col1.sort();
-//         self.col2.sort();
+    let mut solver = SolverDay01::default();
+    let solution = solver.run(Box::new(sample.into_iter())).unwrap();
 
-//         let mut col2_counter = HashMap::new();
-//         for value in self.col2.iter() {
-//             match col2_counter.entry(value) {
-//                 Occupied(mut e) => *e.get_mut() += 1,
-//                 Vacant(e) => {
-//                     e.insert(1);
-//                 }
-//             }
-//         }
-//         let result =
-//             self.col1
-//                 .iter()
-//                 .zip(self.col2.iter())
-//                 .fold((0, 0), |mut acc, (value_1, value_2)| {
-//                     acc.0 += (*value_2 - *value_1).abs();
-//                     acc.1 += *value_1 * col2_counter.get(value_1).unwrap_or(&0);
-//                     acc
-//                 });
-//         Ok(result)
-//     }
-// }
+    assert_eq!(solution.part1, 11);
+    assert_eq!(solution.part2, 31);
+}
+

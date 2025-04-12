@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Default)]
 pub struct Solution
 {
     pub part1: isize,
