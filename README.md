@@ -1,6 +1,13 @@
 # Usage
 
-> cargo run `i`
+Run all implemented solutions:
 
-where `i` is the number of the day to run
+    cargo run
 
+Run a single day [i]:
+    
+    cargo run <i>
+
+Run tests
+
+    cargo test
