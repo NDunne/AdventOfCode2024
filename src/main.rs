@@ -1,32 +1,52 @@
-use shared::Solution;
+use std::path::PathBuf;
+
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+
+use anyhow::anyhow;
 
 mod shared;
-mod solutions;
+mod days;
 
-fn main() {
-    assert!(
-        std::env::args().len() == 2,
-        "Expected: `AdventOfCode2024 <day number>`"
-    );
-    let day_number: u8 = std::env::args()
-        .nth(1)
-        .unwrap() // Safety: Assertion on args above
-        .parse()
-        .expect("Expect argument to be a number");
+use shared::SolutionResult;
+use days::get_solver;
 
-    let mut solver: Box<dyn Solution> = match day_number {
-        1 => Box::new(solutions::day01::day01_solution::SolutionDay01::default()) as Box<dyn Solution>,
-        2 => Box::new(solutions::day02::day02_solution::SolutionDay02::default()) as Box<dyn Solution>,
-        3 => Box::new(solutions::day03::day03_solution::SolutionDay03::default()) as Box<dyn Solution>,
-        _ => panic!("Unexpected day number {}", day_number),
-    };
+fn get_solution(day_number : u8) -> SolutionResult
+{
+    let mut solver = get_solver(day_number).ok_or(anyhow!("Not Implemented"))?;
+    let input_filepath = PathBuf::from(format!("./input/day{:02}.txt", day_number));
 
-    match solver.run() {
-        Ok((part_1, part_2)) => {
-            println!("Day {}:", day_number);
-            println!("Part1: {}", part_1.to_string());
-            println!("Part2: {}", part_2.to_string());
-        }
-        Err(err) => eprintln!("Encountered error: {err:?}"),
+    let file = File::open(&input_filepath)?;
+    let lines: Vec<String> = BufReader::new(file).lines().filter_map(Result::ok).collect();
+    let lines_iter = lines.iter().map(|s| s.as_str());
+    solver.run(Box::new(lines_iter))
+}
+
+fn run_day(day_number : u8)
+{
+    match get_solution(day_number)
+    {
+        Ok(solution)  => println!("Day {:02}: {}", day_number, solution),
+        Err(e) => eprintln!("Day {:02} : {}", day_number, e)
     }
+}
+
+
+fn main() 
+{
+    let day_number: Option<u8> = std::env::args().nth(1).map(|x| x.parse().expect("day argument must be number"));
+
+    if let Some(selected_day) = day_number
+    {
+        run_day(selected_day);
+    }
+    else
+    {
+        for i in 1..26
+        {
+            run_day(i);
+        }
+    }
+
+
 }

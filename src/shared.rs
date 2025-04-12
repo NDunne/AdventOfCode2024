@@ -1,22 +1,19 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::fmt;
 
-/// Trait for file processing
-pub trait FileReader {
-    /// Defines the operation to be performed on each row
-    fn process_row(&mut self, row: &str) -> anyhow::Result<()>;
+pub struct Solution
+{
+    pub part1: isize,
+    pub part2: isize
+}
 
-    /// Reads the file line by line and applies the operation
-    fn process_file(&mut self, file_path: &str) -> anyhow::Result<()> {
-        let file = File::open(file_path)?;
-        let reader = BufReader::new(file);
-        for line in reader.lines() {
-            self.process_row(&line?)?;
-        }
-        Ok(())
+impl fmt::Display for Solution {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Part 1: {} | Part 2: {}", self.part1, self.part2)
     }
 }
 
-pub trait Solution {
-    fn run(&mut self) -> anyhow::Result<(i32, i32)>;
+pub type SolutionResult = anyhow::Result<Solution>;
+
+pub trait Solver {    
+    fn run<'a>(&mut self, lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult;
 }
