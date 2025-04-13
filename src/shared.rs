@@ -15,6 +15,55 @@ impl fmt::Display for Solution {
 
 pub type SolutionResult = anyhow::Result<Solution>;
 
-pub trait Solver {    
-    fn solve<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult;
+pub trait Solver {
+    fn clean<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> Vec<&str>
+    {
+        lines.into_iter().filter_map(|line| {
+            match line.trim() {
+                l if !l.is_empty() => Some(l),
+                _ => None
+            }
+        }).collect()
+    }
+
+    fn solve_impl<'a>(lines: Vec<&'a str>) -> SolutionResult;
+
+    fn solve<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult
+    {
+        Self::solve_impl(Self::clean(lines))
+    }
 }
+
+#[cfg(test)]
+mod test
+{
+    use super::*;
+
+    struct TestSolver {}
+
+    impl Solver for TestSolver
+    {
+        fn solve_impl<'a>(lines: Vec<&'a str>) -> SolutionResult
+        {
+            Ok(Solution::default())
+        }
+
+    }
+
+    #[test]
+    fn test_clean()
+    {
+        let input = vec![
+"",
+"a b c",
+"",
+"    d e f     ",
+""
+        ];
+
+        let expected: Vec<&str> = vec!["a b c", "d e f"]; 
+
+        assert_eq!(TestSolver::clean(Box::new(input.into_iter())), expected);
+    }
+}
+

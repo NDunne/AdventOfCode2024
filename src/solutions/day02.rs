@@ -123,11 +123,11 @@ impl SolverDay02
 
 impl Solver for SolverDay02
 {
-    fn solve<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult
+    fn solve_impl<'a>(lines: Vec<&'a str>) -> SolutionResult
     {
         let mut result = Solution::default();
 
-        for line in lines.filter(|l| !l.trim().is_empty())
+        for line in lines
         {
             let row_items: Vec<i32> = line.split_whitespace().map(|x| x.parse::<i32>().unwrap()).collect();
 

@@ -22,10 +22,10 @@ impl SolverDay03
 
 impl Solver for SolverDay03
 {
-    fn solve<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult
+    fn solve_impl<'a>(lines: Vec<&'a str>) -> SolutionResult
     {
         let mut result = Solution::default();
-        let full_input = lines.into_iter().map(|line| line.trim()).collect::<Vec<&str>>().join("");
+        let full_input = lines.join("");
 
         let mut enabled = true;
 

@@ -7,7 +7,7 @@ pub struct SolverDay01 {}
 
 impl Solver for SolverDay01
 {
-    fn solve<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult
+    fn solve_impl<'a>(lines: Vec<&'a str>) -> SolutionResult
     {    
         let mut col1: Vec<isize> = Vec::new();
         let mut col2: Vec<isize> = Vec::new();
