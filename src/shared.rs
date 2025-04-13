@@ -16,7 +16,7 @@ impl fmt::Display for Solution {
 pub type SolutionResult = anyhow::Result<Solution>;
 
 pub trait Solver {
-    fn clean<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> Vec<&str>
+    fn clean<'a>(lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> Vec<&'a str>
     {
         lines.into_iter().filter_map(|line| {
             match line.trim() {
@@ -43,7 +43,7 @@ mod test
 
     impl Solver for TestSolver
     {
-        fn solve_impl<'a>(lines: Vec<&'a str>) -> SolutionResult
+        fn solve_impl<'a>(_lines: Vec<&'a str>) -> SolutionResult
         {
             Ok(Solution::default())
         }

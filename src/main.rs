@@ -3,12 +3,11 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::process::exit;
 
-use matches::assert_matches;
 
 mod shared;
 mod solutions;
 
-use shared::{Solution, SolutionResult};
+use shared::SolutionResult;
 
 fn get_solution(day_number : u8) -> SolutionResult
 {
@@ -63,6 +62,8 @@ fn main()
 mod verify
 {
     use super::*;
+    use matches::assert_matches;
+    use shared::Solution;
 
     #[test]
     fn day01()
@@ -80,6 +81,12 @@ mod verify
     fn day03()
     {
         assert_matches!(get_solution(3), Ok(Solution { part1: 187825547, part2: 85508223 }));
+    }
+    
+    #[test]
+    fn day04()
+    {
+        assert_matches!(get_solution(4), Ok(Solution { part1: 2578, part2: 0 }));
     }
 }
 
