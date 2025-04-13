@@ -1,13 +1,12 @@
 # Usage
 
-Run all implemented solutions:
+## Run solutions:
 
-    cargo run
+    cargo run        # run all
+    cargo run day01  # run single day
 
-Run a single day [i]:
-    
-    cargo run <i>
+## Run tests:
 
-Run tests
-
-    cargo test
+    cargo test         # all tests
+    cargo test verify  # check solutions with actual input
+    cargo test day01   # test solution for a single day

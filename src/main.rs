@@ -1,12 +1,12 @@
 use std::path::PathBuf;
-
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::process::exit;
 
 use matches::assert_matches;
 
 mod shared;
-mod days;
+mod solutions;
 
 use shared::{Solution, SolutionResult};
 
@@ -21,7 +21,7 @@ fn get_solution(day_number : u8) -> SolutionResult
         lines = BufReader::new(file).lines().filter_map(Result::ok).collect();
     }
     let lines_iter = lines.iter().map(|s| s.as_str());
-    days::solve(day_number, Box::new(lines_iter))
+    solutions::solve(day_number, Box::new(lines_iter))
 }
 
 fn run_day(day_number : u8)
@@ -36,11 +36,19 @@ fn run_day(day_number : u8)
 
 fn main() 
 {
-    let day_number: Option<u8> = std::env::args().nth(1).map(|x| x.parse().expect("day argument must be number"));
+    let first_arg: Option<String> = std::env::args().nth(1);
 
-    if let Some(selected_day) = day_number
+    if let Some(arg) = first_arg
     {
-        run_day(selected_day);
+        if regex::Regex::new(r"^day\d\d?$").unwrap().is_match(&arg) {
+            let selected_day = arg[3..].parse().unwrap();
+            run_day(selected_day);
+        }
+        else
+        {
+            eprintln!("Pass a single argument 'dayXX', or no arguments to run all!");
+            exit(1);
+        }
     }
     else
     {
@@ -51,10 +59,27 @@ fn main()
     }
 }
 
-#[test]
-fn verify_solutions()
+#[cfg(test)]
+mod verify
 {
-    assert_matches!(get_solution(1), Ok(Solution { part1: 1830467, part2: 26674158 }));
-    assert_matches!(get_solution(2), Ok(Solution { part1: 390, part2: 439 }));
+    use super::*;
+
+    #[test]
+    fn day01()
+    {
+        assert_matches!(get_solution(1), Ok(Solution { part1: 1830467, part2: 26674158 }));
+    }
+
+    #[test]
+    fn day02()
+    {
+        assert_matches!(get_solution(2), Ok(Solution { part1: 390, part2: 439 }));
+    }
+
+    #[test]
+    fn day03()
+    {
+        assert_matches!(get_solution(3), Ok(Solution { part1: 187825547, part2: 85508223 }));
+    }
 }
 

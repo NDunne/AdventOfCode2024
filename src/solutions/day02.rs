@@ -1,5 +1,9 @@
 use crate::shared::{Solver, Solution, SolutionResult};
 
+/**
+ * Sequences that are safe if one element is removed are "Dampened", which stores the index
+ * of the removed element for debugging purposes
+ */
 #[derive(PartialEq, Eq, Debug)]
 enum ReportSafety
 {
@@ -23,6 +27,10 @@ pub struct SolverDay02 {}
 
 impl SolverDay02
 {
+    /**
+     * A 'Safe' Pair has a difference of at least 1 and at most 3, in the 
+     * same direction as the sequence it is contained in
+     */
     fn determine_safe_pair(v1: &i32, v2: &i32, direction: &mut i32) -> bool
     {
         let diff = v2 - v1;
@@ -43,6 +51,12 @@ impl SolverDay02
         result
     }
 
+    /**
+     * Determine safe is called recursively once on the list with just the
+     * first element removed, as the direction criteria means it is 
+     * undecidable which of the first two elements to remove if they are unsafe
+     * without looking ahead in the list
+     */
     fn determine_safe_rec(report: &[i32], recurse: bool) -> ReportSafety
     {
         let mut direction = 0;
@@ -132,24 +146,15 @@ mod test
 {
     use super::*;
 
-    #[test]
-    fn test_sample()
+     #[test]
+    fn test_base_cases()
     {
-        let sample: &str = "
-            7 6 4 2 1
-            1 2 7 8 9
-            9 7 6 2 1
-            1 3 2 4 5
-            8 6 4 4 1
-            1 3 6 7 9
-        ";
-
-        let solution = SolverDay02::solve(Box::new(sample.split('\n'))).unwrap();
-
-        assert_eq!(solution.part1, 2);
-        assert_eq!(solution.part2, 4);
+        assert_eq!(ReportSafety::Safe, SolverDay02::determine_safe(&vec![]));
+        assert_eq!(ReportSafety::Safe, SolverDay02::determine_safe(&vec![0]));
+        assert_eq!(ReportSafety::Safe, SolverDay02::determine_safe(&vec![0, 1]));
+        assert_eq!(ReportSafety::Dampened(0), SolverDay02::determine_safe(&vec![0, 0]));
+        assert_eq!(ReportSafety::Dampened(0), SolverDay02::determine_safe(&vec![0, 4]));
     }
-
 
     #[test]
     fn test_basic_safe()
@@ -198,6 +203,24 @@ mod test
         assert_eq!(ReportSafety::Dampened(0), SolverDay02::determine_safe(&vec![6, 9, 6, 3]));
         assert_eq!(ReportSafety::Dampened(1), SolverDay02::determine_safe(&vec![6, 9, 3, 0]));
     }
+    
+    #[test]
+    fn test_sample()
+    {
+        let sample: &str = "
+            7 6 4 2 1
+            1 2 7 8 9
+            9 7 6 2 1
+            1 3 2 4 5
+            8 6 4 4 1
+            1 3 6 7 9
+        ";
+
+        let solution = SolverDay02::solve(Box::new(sample.split('\n'))).unwrap();
+
+        assert_eq!(solution.part1, 2);
+        assert_eq!(solution.part2, 4);
+    }
 
     #[test]
     fn test_regression()
@@ -205,5 +228,4 @@ mod test
         let values: Vec<i32> = "39 41 41 42 44 46 49 46".split_whitespace().map(|x| x.parse::<i32>().unwrap()).collect();
         assert_eq!(ReportSafety::Unsafe, SolverDay02::determine_safe(&values));
     }
-
 }
