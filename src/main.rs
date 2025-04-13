@@ -86,7 +86,7 @@ mod verify
     #[test]
     fn day04()
     {
-        assert_matches!(get_solution(4), Ok(Solution { part1: 2578, part2: 0 }));
+        assert_matches!(get_solution(4), Ok(Solution { part1: 2578, part2: 1972 }));
     }
 }
 

@@ -1,5 +1,6 @@
-use std::slice::Iter;
+use std::{collections::HashMap, slice::Iter};
 use std::fmt;
+use std::hash::Hash;
 
 use itertools::Itertools;
 
@@ -8,7 +9,7 @@ use strum_macros::EnumIter;
 
 use crate::shared::{Solver, Solution, SolutionResult};
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 struct Point
 {
     x: usize,
@@ -18,29 +19,37 @@ struct Point
 #[derive(Debug, Copy, Clone, EnumIter, PartialEq, Eq)]
 enum Direction
 {
-    N,
-    NE,
-    E,
-    SE,
-    S,
-    SW,
-    W,
-    NW
+    N = 0,
+    NE = 1,
+    E = 2,
+    SE = 3,
+    S = 4,
+    SW = 5,
+    W = 6,
+    NW = 7
+}
+
+impl Direction
+{
+    fn is_perp(&self, other: &Direction) -> bool
+    {
+        i8::abs((*self as i8) - (*other as i8)) % 4 == 2
+    }
 }
 
 impl Point
 {
-    fn get_neighbour(&self, direction: Direction) -> Option<Point>
+    fn get_relative(&self, direction: &Direction, count: usize) -> Option<Point>
     {
         match direction {
-            Direction::E  => Some(Point { x: self.x.checked_add(1)?, y: self.y     }),
-            Direction::SE => Some(Point { x: self.x.checked_add(1)?, y: self.y.checked_add(1)? }),
-            Direction::S  => Some(Point { x: self.x,                 y: self.y.checked_add(1)? }),
-            Direction::SW => Some(Point { x: self.x.checked_sub(1)?, y: self.y.checked_add(1)? }),
-            Direction::W  => Some(Point { x: self.x.checked_sub(1)?, y: self.y     }),
-            Direction::NW => Some(Point { x: self.x.checked_sub(1)?, y: self.y.checked_sub(1)? }),
-            Direction::N  => Some(Point { x: self.x,                 y: self.y.checked_sub(1)? }),
-            Direction::NE => Some(Point { x: self.x.checked_add(1)?, y: self.y.checked_sub(1)? }),
+            Direction::E  => Some(Point { x: self.x.checked_add(count)?, y: self.y                     }),
+            Direction::SE => Some(Point { x: self.x.checked_add(count)?, y: self.y.checked_add(count)? }),
+            Direction::S  => Some(Point { x: self.x,                     y: self.y.checked_add(count)? }),
+            Direction::SW => Some(Point { x: self.x.checked_sub(count)?, y: self.y.checked_add(count)? }),
+            Direction::W  => Some(Point { x: self.x.checked_sub(count)?, y: self.y                     }),
+            Direction::NW => Some(Point { x: self.x.checked_sub(count)?, y: self.y.checked_sub(count)? }),
+            Direction::N  => Some(Point { x: self.x,                     y: self.y.checked_sub(count)? }),
+            Direction::NE => Some(Point { x: self.x.checked_add(count)?, y: self.y.checked_sub(count)? }),
         }
     }
 }
@@ -68,12 +77,58 @@ impl<'a> LetterGrid<'a>
         Some(self.grid.get(pos.y)?.chars().nth(pos.x)?)
     }
 
-    fn find_all(&'a self, needle: &char) -> Vec<Point>
+    fn find_all_char(&'a self, needle: &char) -> Vec<Point>
     {
         self.iter().enumerate().fold(Vec::<Point>::new(), |mut points, (row, s)| {
             points.extend(s.match_indices(*needle).map(|(idx, _)| Point { x: idx, y: row}));
             points
         })
+    }
+
+    fn find_all_word(&self, word: &str) -> Vec<(Point, Direction)>
+    {
+        let candidate_origins = self.find_all_char( &word.chars().nth(0).unwrap());
+
+        candidate_origins.iter().cartesian_product(Direction::iter()).filter_map(|(origin, direction)| {
+            let mut next_point = origin.clone();
+
+            for c in word[1..].chars()
+            {
+                next_point = next_point.get_relative(&direction,1)?;
+                self.get(&next_point).filter(|n| *n == c)?;
+            }
+            Some((origin.clone(), direction.clone()))
+        }).collect()
+    }
+
+    fn find_all_x_word(&self, word: &str) -> Vec<(Point, (Direction, Direction))>
+    {
+        let words = self.find_all_word(word);
+        let center_dist = word.len() >> 1;
+
+        let diagonal_words_by_center = words.iter().fold(HashMap::new(), |mut map, (start, direction)| {
+            if let Direction::NE | Direction::SE | Direction::SW | Direction::NW = *direction
+            {
+                let center = start.get_relative(direction, center_dist).unwrap();
+                map.entry(center).or_insert_with(|| Vec::new()).push(direction.clone());
+            }
+            map
+        });
+
+        let mut results = Vec::new();
+        for (center, directions) in diagonal_words_by_center
+        {
+            for pair in directions.iter().combinations(2)
+            {
+                if pair[0].is_perp(pair[1])
+                {
+                    let x_descriptor = (center, (*pair[0], *pair[1]));
+                    results.push(x_descriptor);
+                }
+            }
+        }
+
+        results
     }
 }
 
@@ -86,25 +141,6 @@ impl<'a> fmt::Display for LetterGrid<'a>
 
 pub struct SolverDay04 {}
 
-impl SolverDay04
-{
-    fn find_all_word(wordsearch: &LetterGrid, word: &str) -> Vec<(Point, Direction)>
-    {
-        let candidate_origins = wordsearch.find_all( &word.chars().nth(0).unwrap());
-
-        candidate_origins.iter().cartesian_product(Direction::iter()).filter_map(|(origin, direction)| {
-            let mut next_point = origin.clone();
-
-            for c in word[1..].chars()
-            {
-                next_point = next_point.get_neighbour(direction)?;
-                wordsearch.get(&next_point).filter(|n| *n == c)?;
-            }
-            Some((origin.clone(), direction))
-        }).collect()
-    }
-}
-
 impl Solver for SolverDay04
 {
     fn solve_impl<'a>(lines: Vec<&'a str>) -> SolutionResult
@@ -113,7 +149,10 @@ impl Solver for SolverDay04
         let word = "XMAS";
        
         let mut result = Solution::default();
-        result.part1 = Self::find_all_word(&wordsearch, word).len() as isize;
+        result.part1 = wordsearch.find_all_word(word).len() as isize;
+
+        let x_word = "MAS";
+        result.part2 = wordsearch.find_all_x_word(x_word).len() as isize;
         
         Ok(result)
     }
@@ -128,21 +167,30 @@ mod test
     fn test_point_get_neighbour()
     {
         let start = Point { x: 5, y: 7 };
-        assert_eq!(start.get_neighbour(Direction::N),  Some(Point { x: 5, y: 6}));
-        assert_eq!(start.get_neighbour(Direction::NE), Some(Point { x: 6, y: 6}));
-        assert_eq!(start.get_neighbour(Direction::E),  Some(Point { x: 6, y: 7}));
-        assert_eq!(start.get_neighbour(Direction::SE), Some(Point { x: 6, y: 8}));
-        assert_eq!(start.get_neighbour(Direction::S),  Some(Point { x: 5, y: 8}));
-        assert_eq!(start.get_neighbour(Direction::SW), Some(Point { x: 4, y: 8}));
-        assert_eq!(start.get_neighbour(Direction::W),  Some(Point { x: 4, y: 7}));
-        assert_eq!(start.get_neighbour(Direction::NW), Some(Point { x: 4, y: 6}));
+        assert_eq!(start.get_relative(&Direction::N,  1),  Some(Point { x: 5, y: 6}));
+        assert_eq!(start.get_relative(&Direction::NE, 1), Some(Point { x: 6, y: 6}));
+        assert_eq!(start.get_relative(&Direction::E,  1),  Some(Point { x: 6, y: 7}));
+        assert_eq!(start.get_relative(&Direction::SE, 1), Some(Point { x: 6, y: 8}));
+        assert_eq!(start.get_relative(&Direction::S,  1),  Some(Point { x: 5, y: 8}));
+        assert_eq!(start.get_relative(&Direction::SW, 1), Some(Point { x: 4, y: 8}));
+        assert_eq!(start.get_relative(&Direction::W,  1),  Some(Point { x: 4, y: 7}));
+        assert_eq!(start.get_relative(&Direction::NW, 1), Some(Point { x: 4, y: 6}));
         
         let origin = Point { x: 0, y: 0 };
-        assert_eq!(origin.get_neighbour(Direction::SW), None);
-        assert_eq!(origin.get_neighbour(Direction::W), None); 
-        assert_eq!(origin.get_neighbour(Direction::NW), None);
-        assert_eq!(origin.get_neighbour(Direction::N), None); 
-        assert_eq!(origin.get_neighbour(Direction::NE), None);
+        assert_eq!(origin.get_relative(&Direction::SW, 1), None);
+        assert_eq!(origin.get_relative(&Direction::W,  1), None); 
+        assert_eq!(origin.get_relative(&Direction::NW, 1), None);
+        assert_eq!(origin.get_relative(&Direction::N,  1), None); 
+        assert_eq!(origin.get_relative(&Direction::NE, 1), None);
+    }
+
+    #[test]
+    fn test_point_is_perp()
+    {
+        assert_eq!(Direction::N.is_perp(&Direction::E), true);
+        assert_eq!(Direction::N.is_perp(&Direction::W), true);
+        assert_eq!(Direction::N.is_perp(&Direction::NE), false);
+        assert_eq!(Direction::N.is_perp(&Direction::NW), false);
     }
 
     #[test]
@@ -150,7 +198,7 @@ mod test
     {
         let input = LetterGrid::new(vec!["X..", ".X.", "..X"]);
     
-        assert_eq!(input.find_all(&'X'), vec![Point { x: 0, y: 0 }, 
+        assert_eq!(input.find_all_char(&'X'), vec![Point { x: 0, y: 0 }, 
                                               Point { x: 1, y: 1 }, 
                                               Point { x: 2, y: 2}]);
     }
@@ -169,8 +217,8 @@ mod test
     #[test]
     fn test_find_all_word()
     {
-        let grid = vec!["BBB", "BAB", "BBB"];
-        assert_eq!(SolverDay04::find_all_word(&LetterGrid::new(grid), "AB"), vec![
+        let grid = LetterGrid::new(vec!["BBB", "BAB", "BBB"]);
+        assert_eq!(grid.find_all_word("AB"), vec![
             (Point { x: 1, y: 1}, Direction::N), 
             (Point { x: 1, y: 1}, Direction::NE), 
             (Point { x: 1, y: 1}, Direction::E), 
@@ -183,23 +231,72 @@ mod test
     }
 
     #[test]
+    fn test_find_all_x_word()
+    {
+        let grid = LetterGrid::new(vec![
+            "AAA", 
+            "ABC", 
+            "CCC"
+        ]);
+        assert_eq!(grid.find_all_x_word("ABC"), vec![
+            (Point { x: 1, y: 1 }, (Direction::SE, Direction::SW)), 
+        ]);
+
+        let grid2 = LetterGrid::new(vec![
+            "CCC", 
+            "CBA", 
+            "AAA"
+        ]);
+        assert_eq!(grid2.find_all_x_word("ABC"), vec![
+            (Point { x: 1, y: 1 }, (Direction::NE, Direction::NW))
+        ]);
+
+        let grid3 = LetterGrid::new(vec![
+            "ACC", 
+            "ABC", 
+            "AAC"
+        ]);
+        assert_eq!(grid3.find_all_x_word("ABC"), vec![
+            (Point { x: 1, y: 1 }, (Direction::SE, Direction::NE)), 
+        ]);
+
+        let grid4 = LetterGrid::new(vec![
+            "CAA", 
+            "CBA", 
+            "CCA"
+        ]);
+        assert_eq!(grid4.find_all_x_word("ABC"), vec![
+            (Point { x: 1, y: 1 }, (Direction::SW, Direction::NW))
+        ]);
+
+        let grid5 = LetterGrid::new(vec![
+            "AA.", 
+            ".B.", 
+            ".CC"
+        ]);
+        assert_eq!(grid5.find_all_x_word("ABC"), vec![]);
+    }
+
+
+    #[test]
     fn test_sample()
     {
         let sample: &str = "
-....XXMAS.
-.SAMXMS...
-...S..A...
-..A.A.MS.X
-XMASAMX.MM
-X.....XA.A
-S.S.S.S.SS
-.A.A.A.A.A
-..M.M.M.MM
-.X.X.XMASX
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
         ";
 
         let solution = SolverDay04::solve(Box::new(sample.split('\n'))).unwrap();
         assert_eq!(solution.part1, 18);
+        assert_eq!(solution.part2, 9);
     }
 
 }
