@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::{cmp::Ordering, collections::{HashMap, HashSet}};
 
 use crate::shared::{Solver, Solution, SolutionResult};
 
@@ -9,33 +9,30 @@ struct Rule
     prohibited_after: HashSet<isize>
 }
 
-enum RuleResult
-{
-    Correct(isize),
-    ReOrdered(isize)
-}
-
 #[derive(Default)]
 struct RuleChecker {
     rules: HashMap<isize, Rule>
 }
 
+enum RuleResult {
+    Correct(isize),
+    ReOrdered(isize)
+}
+
 impl RuleChecker
 {
+    // A 'Rule' implies first must appear only before second if both are present
     fn add_rule(&mut self, first: isize, second: isize)
     {
-        println!("Add rule: {} -> {}", first, second);
-
         self.rules.entry(first).or_insert(Rule::default()).prohibited_before.insert(second);
         self.rules.entry(second).or_insert(Rule::default()).prohibited_after.insert(first);
     }
 
+    // Recursive call adds the prohibited list 
     fn check_rec(&self, update_slice: &[isize], prohibited: HashSet<isize>) -> Option<isize>
     {
         let pivot_idx = update_slice.len()/2;
         let pivot =  update_slice[pivot_idx];
-        println!("Pivot: {}", pivot);
-        println!("Prohibited: {:?}", prohibited);
 
         if prohibited.contains(&pivot)
         {
@@ -54,8 +51,6 @@ impl RuleChecker
             right_prohibited.extend(&pivot_rule.prohibited_after);
         }
 
-        println!("{:?} {:?}", left, right);
-
         if (left.len() == 0 || self.check_rec(left, left_prohibited).is_some()) &&
             (right.len() == 0 || self.check_rec(right, right_prohibited).is_some())
             {
@@ -64,15 +59,45 @@ impl RuleChecker
         None
     }
 
-    fn check(&self, update: &Vec<isize>) -> Option<isize>
+    // Search the provided string as a tree, rooted at the middle element. Returns the middle element
+    fn check(&self, update: &Vec<isize>) -> RuleResult
     {
-        return self.check_rec(update, HashSet::new());
+        if let Some(middle_val) = self.check_rec(update, HashSet::new())
+        {
+            return RuleResult::Correct(middle_val);
+        }
+
+        let re_ordered = self.correct(&update);
+        RuleResult::ReOrdered(re_ordered[re_ordered.len()/2])
+    }
+
+    // Comparison function used to correct ordering
+    fn get_order(&self, left: &isize, right: &isize) -> Ordering
+    {
+        if let Some(pivot_rule) = self.rules.get(&left)
+        {
+            if pivot_rule.prohibited_before.contains(&right)
+            {
+                return Ordering::Less;
+            }
+            else if pivot_rule.prohibited_after.contains(&right)
+            {
+                return Ordering::Greater;
+            }
+        }
+        Ordering::Equal
+    }
+
+    // Use the rules to fix an incorrectly ordered update
+    fn correct(&self, update: &Vec<isize>) -> Vec<isize>
+    {
+        let mut re_ordered = update.clone();
+        re_ordered.sort_by(|x, y| self.get_order(x, y));
+        re_ordered
     }
 }
 
-pub struct SolverDay05 {
-
-}
+pub struct SolverDay05 {}
 
 impl Solver for SolverDay05
 {
@@ -92,14 +117,14 @@ impl Solver for SolverDay05
             }
 
             let update_parts: Vec<isize> = line.split(',').map(|x| x.parse::<isize>().unwrap()).collect();
-            println!("Update: {:?}", update_parts);
-            if let Some(correct) = rule_checker.check(&update_parts)
+
+            // Sums middle elements depending on if ordering was correct
+            match rule_checker.check(&update_parts)
             {
-                result.part1 += correct;
+                RuleResult::Correct(value) => result.part1 += value,
+                RuleResult::ReOrdered(value) => result.part2 += value
             }
-
         }
-
 
         Ok(result)
     }
@@ -110,7 +135,19 @@ mod test
 {
     use super::*;
 
-        #[test]
+    #[test]
+    fn test_sort()
+    {
+        let list: Vec<isize> = vec![1, 2, 3, 4];
+
+        let mut rule_checker = RuleChecker::default();
+
+        rule_checker.add_rule(2, 1);
+
+        assert_eq!(rule_checker.correct(&list), vec![2, 1, 3, 4]);
+    }
+
+    #[test]
     fn test_sample()
     {
         let sample: &str = "
@@ -145,6 +182,7 @@ mod test
     
         let solution = SolverDay05::solve(Box::new(sample.split('\n'))).unwrap();
         assert_eq!(solution.part1, 143);
+        assert_eq!(solution.part2, 123);
 
     }
 

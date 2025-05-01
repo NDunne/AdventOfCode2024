@@ -92,7 +92,7 @@ mod verify
     #[test]
     fn day05()
     {
-        assert_matches!(get_solution(5), Ok(Solution { part1: 4569, part2: 0 }));
+        assert_matches!(get_solution(5), Ok(Solution { part1: 4569, part2: 6456 }));
     }
 }
 
