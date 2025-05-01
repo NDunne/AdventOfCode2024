@@ -88,5 +88,11 @@ mod verify
     {
         assert_matches!(get_solution(4), Ok(Solution { part1: 2578, part2: 1972 }));
     }
+
+    #[test]
+    fn day05()
+    {
+        assert_matches!(get_solution(5), Ok(Solution { part1: 4569, part2: 0 }));
+    }
 }
 

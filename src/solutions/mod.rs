@@ -4,6 +4,7 @@ mod day01;
 mod day02;
 mod day03;
 mod day04;
+mod day05;
 
 pub fn solve<'a>(day_number : u8, lines: Box<dyn Iterator<Item = &'a str> + 'a>) -> SolutionResult
 {
@@ -12,6 +13,7 @@ pub fn solve<'a>(day_number : u8, lines: Box<dyn Iterator<Item = &'a str> + 'a>)
                 2 => day02::SolverDay02::solve(lines),
                 3 => day03::SolverDay03::solve(lines),
                 4 => day04::SolverDay04::solve(lines),
+                5 => day05::SolverDay05::solve(lines),
                 _ => Err(anyhow::anyhow!("Not Implemented"))
     }
 }
